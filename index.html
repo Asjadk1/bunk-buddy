@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Bunk Buddy — Attendance Calculator</title>
+  <meta name="description" content="Scan your college attendance report and find out exactly how many classes you can bunk — or need to attend — to stay above 75%." />
+
+  <!-- PWA -->
+  <link rel="manifest" href="manifest.webmanifest" />
+  <meta name="theme-color" content="#0b0e14" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Bunk Buddy" />
+  <link rel="apple-touch-icon" href="apple-touch-icon.png" />
+  <link rel="icon" type="image/png" href="icon-192.png" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css?v=9" />
+</head>
+<body>
+  <div class="bg-glow"></div>
+
+  <header class="header">
+    <div class="logo"><img class="logo-img" src="logo.png?v=9" alt="" onerror="this.remove()" /> <span>Bunk<em>Buddy</em></span></div>
+    <div class="header-controls">
+      <button class="install-btn" id="installBtn" hidden title="Install Bunk Buddy">⬇️ Install</button>
+      <label class="target-label" for="targetInput">Target&nbsp;%</label>
+      <input id="targetInput" type="number" min="1" max="100" value="75" />
+      <a class="insta-link" href="https://www.instagram.com/4wsjad" target="_blank" rel="noopener" title="Instagram">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <rect x="2" y="2" width="20" height="20" rx="5"/>
+          <circle cx="12" cy="12" r="4.5"/>
+          <circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/>
+        </svg>
+        <span>@4wsjad</span>
+      </a>
+    </div>
+  </header>
+
+  <main class="container">
+
+    <section class="hero">
+      <h1>Can I bunk today?</h1>
+      <p>Upload a photo of your college attendance sheet. We'll read it, crunch the numbers, and tell you exactly how many classes you need to attend — or how many you can safely skip.</p>
+    </section>
+
+    <!-- STEP 1: Upload -->
+    <section class="card" id="uploadCard">
+      <div class="step-tag">Step 1 · Upload</div>
+      <div class="dropzone" id="dropzone" tabindex="0" role="button" aria-label="Upload attendance image">
+        <input type="file" id="fileInput" accept="image/*" hidden />
+        <div class="dz-inner" id="dzInner">
+          <div class="dz-icon">📸</div>
+          <p class="dz-title">Drop your attendance photo here</p>
+          <p class="dz-sub">or click to browse · you can also paste (Ctrl/⌘+V) a screenshot</p>
+        </div>
+        <img id="previewImg" class="preview-img" alt="Uploaded attendance sheet" hidden />
+      </div>
+
+      <div class="not-report" id="notReport" hidden>
+        <span class="nr-icon">🤔</span>
+        <div>
+          <strong>That doesn't look like an attendance report.</strong>
+          <p>We scanned the image but couldn't find the usual markers (Attendance Report, TH, AH, DL, percentages…). Upload the screenshot of your <em>Course Wise Attendance Report</em> — or if this really is it, try a sharper, straight-on photo or enter the numbers manually.</p>
+        </div>
+      </div>
+
+      <div class="ocr-status" id="ocrStatus" hidden>
+        <div class="spinner"></div>
+        <div class="ocr-text">
+          <span id="ocrLabel">Reading your attendance sheet…</span>
+          <div class="progress-track"><div class="progress-bar" id="ocrProgress"></div></div>
+        </div>
+      </div>
+
+      <div class="upload-actions">
+        <button class="btn ghost" id="changeImageBtn" hidden>↺ Change image</button>
+        <button class="btn ghost" id="manualBtn">✏️ Skip — enter data manually</button>
+      </div>
+    </section>
+
+    <!-- STEP 2: Review / edit table -->
+    <section class="card" id="tableCard" hidden>
+      <div class="step-tag">Step 2 · Review &amp; fix</div>
+      <p class="card-hint" id="tableHint">We extracted this from your photo. OCR isn't perfect — double-check the numbers and edit anything that looks off.</p>
+      <div class="table-wrap">
+        <table id="subjectTable">
+          <thead>
+            <tr>
+              <th>Course</th>
+              <th>Attended&nbsp;(AH)</th>
+              <th>Duty&nbsp;leave&nbsp;(DL)</th>
+              <th>Total&nbsp;(TH)</th>
+              <th>Current&nbsp;%</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="subjectBody"></tbody>
+        </table>
+      </div>
+      <div class="table-actions">
+        <button class="btn ghost" id="addRowBtn">＋ Add subject</button>
+        <button class="btn primary" id="calcBtn">Calculate →</button>
+      </div>
+    </section>
+
+    <!-- STEP 3: Results -->
+    <section id="resultsSection" hidden>
+      <div class="step-tag standalone">Step 3 · Verdict</div>
+      <div class="overall-card" id="overallCard"></div>
+      <div class="share-bar" id="shareBar" hidden>
+        <button class="btn primary" id="shareBtn">📤 Share my verdict</button>
+        <button class="btn ghost" id="downloadBtn">⬇️ Save as image</button>
+        <button class="btn ghost" id="startOverBtn">↺ Start over</button>
+      </div>
+      <div class="results-grid" id="resultsGrid"></div>
+      <div class="card chart-card" id="chartCard" hidden>
+        <div class="step-tag">📊 At a glance</div>
+        <p class="card-hint">Every course against your <span id="chartTargetLabel">75%</span> line — sorted from riskiest to safest.</p>
+        <div class="chart" id="chart"></div>
+      </div>
+    </section>
+
+    <!-- Fun fact -->
+    <section class="card fun-fact" id="funFactCard">
+      <div class="step-tag">🎲 Fun fact</div>
+      <p class="fun-fact-text" id="funFactText"></p>
+      <button class="btn ghost" id="newFactBtn">🔁 Another one</button>
+    </section>
+
+  </main>
+
+  <footer class="footer">
+    Made for students who live on the edge of 75% · All processing happens in your browser — your photo never leaves your device.
+    <span class="disclaimer">⚖️ Disclaimer: The developer officially recommends attending every single class, drinking water, and sitting in the front row. This app exists strictly for educational purposes — the education being math. What you do with the math is between you and your hall ticket.</span>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+  <script src="script.js?v=9"></script>
+</body>
+</html>
